@@ -150,16 +150,14 @@ def mainGame(movementInfo):
     newPipe2 = getRandomPipe()
 
     # list of upper pipes
-    upperPipes = [
-        {'x': SCREENWIDTH + 200, 'y': newPipe1[0]['y']},
-        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[0]['y']},
-    ]
+    upperPipes = [newPipe1[0], newPipe2[0]]
+    upperPipes[0]['x'] = SCREENWIDTH + 200
+    upperPipes[1]['x'] = SCREENWIDTH + 200 + (SCREENWIDTH / 2)
 
     # list of lowerpipe
-    lowerPipes = [
-        {'x': SCREENWIDTH + 200, 'y': newPipe1[1]['y']},
-        {'x': SCREENWIDTH + 200 + (SCREENWIDTH / 2), 'y': newPipe2[1]['y']},
-    ]
+    lowerPipes = [newPipe1[1], newPipe2[1]]
+    lowerPipes[0]['x'] = SCREENWIDTH + 200
+    lowerPipes[1]['x'] = SCREENWIDTH + 200 + (SCREENWIDTH / 2)
 
     pipeVelX = -4
 
@@ -173,10 +171,11 @@ def mainGame(movementInfo):
             if event.type == KEYDOWN and (event.key == K_DOWN):
                 birds[1].order_flap()
 
+        # update birds and remove crashed ones
         for bird in list(birds):
             crashed, groundCrash = bird.update(upperPipes, lowerPipes)
             if crashed:
-                if len(birds) == 1:  # we have a last bird that crashed
+                if len(birds) == 1:  # we have a last bird that crashed, end of generation
                     return {
                         'groundCrash': groundCrash,
                         'basex': basex,
@@ -189,7 +188,7 @@ def mainGame(movementInfo):
                     birds.remove(bird)
 
         # play sound if birds are in the middle of a pipe
-        playerMidPos = birds[0].playerx + birds[0].images[0].get_width() / 2
+        playerMidPos = birds[0].playerx + birds[0].images[0].get_width() / 2  # arbitrary bird,all x coords are the same
         for pipe in upperPipes:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
@@ -306,8 +305,8 @@ def getRandomPipe():
     pipeX = SCREENWIDTH + 10
 
     return [
-        {'x': pipeX, 'y': gapY - pipeHeight},  # upper pipe
-        {'x': pipeX, 'y': gapY + PIPEGAPSIZE},  # lower pipe
+        {'x': pipeX, 'y': gapY - pipeHeight, 'gap': gapY},  # upper pipe
+        {'x': pipeX, 'y': gapY + PIPEGAPSIZE, 'gap': gapY + PIPEGAPSIZE},  # lower pipe
     ]
 
 

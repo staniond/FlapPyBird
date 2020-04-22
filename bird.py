@@ -83,3 +83,19 @@ class Bird:
 
     def think(self):
         pass
+
+    # gets normalized (to <0, 1>) data for bird's neural network input
+    def get_world_data(self, upperPipes, lowerPipes):
+        closest_index = self.get_closest_pipe(upperPipes)
+        return [
+            self.playery / BASEY,  # bird y location
+            (self.playerVelY / self.playerMaxVelY) / 2 + .5,  # bird y velocity
+            (upperPipes[closest_index]['x'] + IMAGES['pipe'][0].get_width() - self.playerx)/150,  # pipe x location
+            upperPipes[closest_index]['gap'] / BASEY,  # upper pipe y location
+            lowerPipes[closest_index]['gap'] / BASEY,  # lower pipe y location
+        ]
+
+    def get_closest_pipe(self, pipes):
+        for i, pipe in enumerate(pipes):
+            if pipe['x'] + IMAGES['pipe'][0].get_width() > self.playerx:
+                return i
