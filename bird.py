@@ -1,4 +1,5 @@
 from flappy import *
+from birdbrain import BirdBrain
 
 
 class Bird:
@@ -28,7 +29,14 @@ class Bird:
         self.score = 0
         self.playerIndex = self.loopIter = 0
 
-    def order_flap(self):
+        self.brain = BirdBrain()
+
+    def think(self, upperPipes, lowerPipes):
+        output = self.brain.predict(self.get_world_data(upperPipes, lowerPipes))
+        if output[0] > output[1]:
+            self.flap()
+
+    def flap(self):
         if self.playery > -2 * self.images[0].get_height():
             self.playerVelY = self.playerFlapAcc
             self.playerFlapped = True
@@ -81,16 +89,13 @@ class Bird:
         playerSurface = pygame.transform.rotate(self.images[self.playerIndex], visibleRot)
         screen.blit(playerSurface, (self.playerx, self.playery))
 
-    def think(self):
-        pass
-
     # gets normalized (to <0, 1>) data for bird's neural network input
     def get_world_data(self, upperPipes, lowerPipes):
         closest_index = self.get_closest_pipe(upperPipes)
         return [
             self.playery / BASEY,  # bird y location
             (self.playerVelY / self.playerMaxVelY) / 2 + .5,  # bird y velocity
-            (upperPipes[closest_index]['x'] + IMAGES['pipe'][0].get_width() - self.playerx)/150,  # pipe x location
+            (upperPipes[closest_index]['x'] + IMAGES['pipe'][0].get_width() - self.playerx) / 150,  # pipe x location
             upperPipes[closest_index]['gap'] / BASEY,  # upper pipe y location
             lowerPipes[closest_index]['gap'] / BASEY,  # lower pipe y location
         ]

@@ -139,7 +139,7 @@ def showWelcomeAnimation():
 
 
 def mainGame(movementInfo):
-    birds = [Bird(), Bird()]
+    birds = [Bird() for x in range(5)]
     score = 0
 
     basex = movementInfo['basex']
@@ -167,9 +167,10 @@ def mainGame(movementInfo):
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                birds[0].order_flap()
-            if event.type == KEYDOWN and (event.key == K_DOWN):
-                birds[1].order_flap()
+                pass  # move bird
+
+        for bird in birds:
+            bird.think(upperPipes, lowerPipes)
 
         # update birds and remove crashed ones
         for bird in list(birds):
