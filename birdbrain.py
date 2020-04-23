@@ -1,27 +1,33 @@
-import tensorflow as tf
-from tensorflow.keras import layers
+import torch
+import copy
+import random
+import numpy as np
 
 
 class BirdBrain:
-    def __init__(self):
-        # NN with 5 input nodes, 8 hidden nodes and 2 output nodes
-        self.model = tf.keras.Sequential()
-        self.model.add(layers.Dense(8, input_shape=(5,), activation='sigmoid', kernel_initializer='random_uniform',
-                                    bias_initializer='random_uniform'))
-        self.model.add(layers.Dense(2, activation='softmax', kernel_initializer='random_uniform',
-                                    bias_initializer='random_uniform'))
+    def __init__(self, input_size=5, hidden_size=8, output_size=1):
+        layers = list()
+        layers.append(torch.nn.Linear(input_size, hidden_size))
+        layers.append(torch.nn.Sigmoid())
+        layers.append(torch.nn.Linear(hidden_size, output_size))
+        layers.append(torch.nn.Sigmoid())
 
-    def predict(self, world_data):
-        return self.model.predict([world_data])[0]
+        self.net = torch.nn.Sequential(*layers)
+
+    def forward(self, data):
+        return self.net.forward(torch.tensor(data)).item()
 
     def clone(self):
-        new_brain = BirdBrain()
-        new_brain.model.set_weights(self.model.get_weights())
-        return new_brain
+        return copy.deepcopy(self)
 
     def mutate(self, probability):
-        pass
+        for tensor in self.net.parameters():
+            flattened = tensor.view(-1)
+            for i in range(flattened.size()[0]):
+                if random.random() < probability:
+                    flattened[i] = flattened[i].item() + np.random.normal(0)
 
     @staticmethod
     def crossover(brain1, brain2):
+        # TODO
         return brain1, brain2

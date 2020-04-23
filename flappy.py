@@ -5,17 +5,12 @@ import sys
 import pygame
 from pygame.locals import *
 
-from bird import *
 from globals import *
-
-try:
-    xrange
-except NameError:
-    xrange = range
+from evolution import *
 
 
 def main():
-    global SCREEN, FPSCLOCK
+    global SCREEN, FPSCLOCK, FPS
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
@@ -75,6 +70,9 @@ def main():
     SOUNDS['swoosh'] = pygame.mixer.Sound('assets/audio/swoosh' + soundExt)
     SOUNDS['wing'] = pygame.mixer.Sound('assets/audio/wing' + soundExt)
 
+    evolution = Evolution(POPULATION_SIZE)
+
+    show_welcome = True
     while True:
         # select random background sprites
         randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
@@ -101,9 +99,18 @@ def main():
             getHitmask(pygame.image.load(PLAYERS_LIST[0][2]).convert_alpha()),
         )
 
-        movementInfo = showWelcomeAnimation()
-        crashInfo = mainGame(movementInfo)
-        showGameOverScreen(crashInfo)
+        if show_welcome:
+            show_welcome = False
+            showWelcomeAnimation()
+
+        crashInfo = mainGame(evolution)
+        train_next_generation = showGameOverScreen(crashInfo)
+        if train_next_generation:
+            FPS = -1
+            evolution.new_population()
+        else:
+            FPS = DEFAULT_FPS
+            evolution.show_best_bird()
 
 
 def showWelcomeAnimation():
@@ -120,12 +127,10 @@ def showWelcomeAnimation():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+            if event.type == KEYDOWN and event.key == K_n:
                 # make first flap sound and return values for mainGame
-                SOUNDS['wing'].play()
-                return {
-                    'basex': basex,
-                }
+                # SOUNDS['wing'].play()
+                return
 
         basex = -((-basex + 4) % baseShift)
 
@@ -135,14 +140,14 @@ def showWelcomeAnimation():
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
 
         pygame.display.update()
-        FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(DEFAULT_FPS)
 
 
-def mainGame(movementInfo):
-    birds = [Bird() for x in range(5)]
+def mainGame(evolution):
+    birds = evolution.population
     score = 0
 
-    basex = movementInfo['basex']
+    basex = 0
     baseShift = IMAGES['base'].get_width() - IMAGES['background'].get_width()
 
     # get 2 new pipes to add to upperPipes lowerPipes list
@@ -166,8 +171,19 @@ def mainGame(movementInfo):
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                pass  # move bird
+            if event.type == KEYDOWN and event.key == K_s:
+                for bird in birds:
+                    evolution.previous_population.append(bird)
+                evolution.population = [evolution.previous_population[0]]
+                evolution.print_info()
+                return {
+                    'groundCrash': False,
+                    'basex': basex,
+                    'upperPipes': upperPipes,
+                    'lowerPipes': lowerPipes,
+                    'score': score,
+                    'lastBird': birds[0]
+                }
 
         for bird in birds:
             bird.think(upperPipes, lowerPipes)
@@ -176,7 +192,9 @@ def mainGame(movementInfo):
         for bird in list(birds):
             crashed, groundCrash = bird.update(upperPipes, lowerPipes)
             if crashed:
+                evolution.previous_population.append(bird)
                 if len(birds) == 1:  # we have a last bird that crashed, end of generation
+                    evolution.print_info()
                     return {
                         'groundCrash': groundCrash,
                         'basex': basex,
@@ -193,7 +211,7 @@ def mainGame(movementInfo):
         for pipe in upperPipes:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
-                SOUNDS['point'].play()
+                # SOUNDS['point'].play()
                 score += 1
 
         # basex change
@@ -224,7 +242,7 @@ def mainGame(movementInfo):
 
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
-        showScore(birds[0].score)
+        showScore(score)
 
         for bird in birds:
             bird.blit(SCREEN)
@@ -241,9 +259,7 @@ def showGameOverScreen(crashInfo):
     playerHeight = bird.images[0].get_height()
     playerAccY = 2
     playerVelRot = 7
-
     basex = crashInfo['basex']
-
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
 
     while True:
@@ -251,9 +267,10 @@ def showGameOverScreen(crashInfo):
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                if bird.playery + playerHeight >= BASEY - 1:
-                    return
+            if event.type == KEYDOWN and event.key == K_n:
+                return True
+            if event.type == KEYDOWN and event.key == K_b:
+                return False
 
         # player y shift
         if bird.playery + playerHeight < BASEY - 1:
@@ -371,8 +388,8 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
     x1, y1 = rect.x - rect1.x, rect.y - rect1.y
     x2, y2 = rect.x - rect2.x, rect.y - rect2.y
 
-    for x in xrange(rect.width):
-        for y in xrange(rect.height):
+    for x in range(rect.width):
+        for y in range(rect.height):
             if hitmask1[x1 + x][y1 + y] and hitmask2[x2 + x][y2 + y]:
                 return True
     return False
@@ -381,9 +398,9 @@ def pixelCollision(rect1, rect2, hitmask1, hitmask2):
 def getHitmask(image):
     """returns a hitmask using an image's alpha."""
     mask = []
-    for x in xrange(image.get_width()):
+    for x in range(image.get_width()):
         mask.append([])
-        for y in xrange(image.get_height()):
+        for y in range(image.get_height()):
             mask[x].append(bool(image.get_at((x, y))[3]))
     return mask
 

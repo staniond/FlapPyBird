@@ -3,7 +3,9 @@ from birdbrain import BirdBrain
 
 
 class Bird:
-    def __init__(self):
+    def __init__(self, brain=None):
+        self.brain = brain if brain is not None else BirdBrain()
+
         # select random player sprites
         randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
         self.images = (
@@ -26,21 +28,19 @@ class Bird:
         self.playerFlapAcc = -9  # players speed on flapping
         self.playerFlapped = False  # True when player flaps
 
-        self.score = 0
+        self.fitness = 0
         self.playerIndex = self.loopIter = 0
 
-        self.brain = BirdBrain()
-
     def think(self, upperPipes, lowerPipes):
-        output = self.brain.predict(self.get_world_data(upperPipes, lowerPipes))
-        if output[0] > output[1]:
+        output = self.brain.forward(self.get_world_data(upperPipes, lowerPipes))
+        if output > 0.5:
             self.flap()
 
     def flap(self):
         if self.playery > -2 * self.images[0].get_height():
             self.playerVelY = self.playerFlapAcc
             self.playerFlapped = True
-            SOUNDS['wing'].play()
+            # SOUNDS['wing'].play()
 
     # returns if bird has crashed
     def update(self, upperPipes, lowerPipes):
@@ -49,17 +49,12 @@ class Bird:
 
         if crashTest[0]:
             # play hit and die sounds
-            SOUNDS['hit'].play()
-            if not crashTest[1]:
-                SOUNDS['die'].play()
+            # SOUNDS['hit'].play()
+            # if not crashTest[1]:
+            #     SOUNDS['die'].play()
             return crashTest
-
-        # check for score
-        playerMidPos = self.playerx + self.images[0].get_width() / 2
-        for pipe in upperPipes:
-            pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
-            if pipeMidPos <= playerMidPos < pipeMidPos + 4:
-                self.score += 1
+        else:
+            self.fitness += 1
 
         if (self.loopIter + 1) % 3 == 0:
             self.playerIndex = next(self.playerIndexGen)
