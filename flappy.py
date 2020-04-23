@@ -73,6 +73,7 @@ def main():
     evolution = Evolution(POPULATION_SIZE)
 
     show_welcome = True
+    show_best_bird = False
     while True:
         # select random background sprites
         randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
@@ -103,14 +104,13 @@ def main():
             show_welcome = False
             showWelcomeAnimation()
 
-        crashInfo = mainGame(evolution)
-        train_next_generation = showGameOverScreen(crashInfo)
-        if train_next_generation:
-            FPS = -1
+        skip_game_over, crashInfo = mainGame(evolution, show_best_bird)
+
+        if not show_best_bird:
             evolution.new_population()
-        else:
-            FPS = DEFAULT_FPS
-            evolution.show_best_bird()
+
+        if not skip_game_over:
+            show_best_bird = showGameOverScreen(crashInfo)
 
 
 def showWelcomeAnimation():
@@ -140,11 +140,11 @@ def showWelcomeAnimation():
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
 
         pygame.display.update()
-        FPSCLOCK.tick(DEFAULT_FPS)
+        FPSCLOCK.tick(FPS)
 
 
-def mainGame(evolution):
-    birds = evolution.population
+def mainGame(evolution, show_best_bird):
+    birds = [Bird(evolution.best_brain.clone())] if show_best_bird else evolution.population
     score = 0
 
     basex = 0
@@ -172,11 +172,7 @@ def mainGame(evolution):
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and event.key == K_s:
-                for bird in birds:
-                    evolution.previous_population.append(bird)
-                evolution.population = [evolution.previous_population[0]]
-                evolution.print_info()
-                return {
+                return_val = False, {
                     'groundCrash': False,
                     'basex': basex,
                     'upperPipes': upperPipes,
@@ -184,6 +180,12 @@ def mainGame(evolution):
                     'score': score,
                     'lastBird': birds[0]
                 }
+                if show_best_bird:
+                    return return_val
+                else:
+                    for bird in birds:
+                        evolution.previous_population.append(bird)
+                    return return_val
 
         for bird in birds:
             bird.think(upperPipes, lowerPipes)
@@ -192,10 +194,10 @@ def mainGame(evolution):
         for bird in list(birds):
             crashed, groundCrash = bird.update(upperPipes, lowerPipes)
             if crashed:
-                evolution.previous_population.append(bird)
+                if not show_best_bird:
+                    evolution.previous_population.append(bird)
                 if len(birds) == 1:  # we have a last bird that crashed, end of generation
-                    evolution.print_info()
-                    return {
+                    return True, {
                         'groundCrash': groundCrash,
                         'basex': basex,
                         'upperPipes': upperPipes,
@@ -248,7 +250,7 @@ def mainGame(evolution):
             bird.blit(SCREEN)
 
         pygame.display.update()
-        FPSCLOCK.tick(FPS)
+        FPSCLOCK.tick(FPS if show_best_bird else -1)
 
 
 def showGameOverScreen(crashInfo):
@@ -268,9 +270,9 @@ def showGameOverScreen(crashInfo):
                 pygame.quit()
                 sys.exit()
             if event.type == KEYDOWN and event.key == K_n:
-                return True
-            if event.type == KEYDOWN and event.key == K_b:
                 return False
+            if event.type == KEYDOWN and event.key == K_b:
+                return True
 
         # player y shift
         if bird.playery + playerHeight < BASEY - 1:

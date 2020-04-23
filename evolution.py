@@ -7,15 +7,21 @@ class Evolution:
         self.generation_number = 1
         self.population_size = population_size
         self.population = [Bird() for _ in range(self.population_size)]
+        self.best_brain = self.population[0].brain
+        self.best_fitness = 0
         self.previous_population = []
 
     def new_population(self):
+        print(f"Gen {self.generation_number}, best bird fitness: {self.pick_best_bird(self.previous_population).fitness} ({self.best_fitness})")
         self.generation_number += 1
 
         self.population = []
 
-        best_brain = self.pick_best_brain(self.previous_population)
-        self.population.append(Bird(best_brain))
+        prev_best_bird = self.pick_best_bird(self.previous_population)
+        if prev_best_bird.fitness > self.best_fitness:
+            self.best_fitness = prev_best_bird.fitness
+            self.best_brain = prev_best_bird.brain.clone()
+        self.population.append(Bird(self.best_brain.clone()))
 
         while len(self.population) < POPULATION_SIZE:
             first_brain, second_brain = self.tournament_pick_brains(self.previous_population)
@@ -47,10 +53,3 @@ class Evolution:
     def pick_best_bird(generation):
         best_bird = max(generation, key=lambda x: x.fitness)
         return best_bird
-
-    def show_best_bird(self):
-        best_bird_brain = self.population[0].brain.clone()    # last bird is left in the population
-        self.population = [Bird(best_bird_brain)]
-
-    def print_info(self):
-        print(f"Gen {self.generation_number}, best bird fitness: {self.pick_best_bird(self.previous_population).fitness}")

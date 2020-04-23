@@ -25,7 +25,7 @@ class BirdBrain:
             flattened = tensor.view(-1)
             for i in range(flattened.size()[0]):
                 if random.random() < probability:
-                    flattened[i] = flattened[i].item() + np.random.normal(0)
+                    flattened[i] = flattened[i].item() + np.random.normal()
 
     @staticmethod
     def crossover(brain1, brain2):

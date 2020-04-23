@@ -1,10 +1,9 @@
-DEFAULT_FPS = 30
-FPS = -1
+FPS = 30
 SCREENWIDTH = 288
 SCREENHEIGHT = 512
 PIPEGAPSIZE = 100  # gap between upper and lower part of pipe
 BASEY = SCREENHEIGHT * 0.79
-POPULATION_SIZE = 200
+POPULATION_SIZE = 150
 MUTATION_PROBABILITY = 0.1
 # image, sound and hitmask  dicts
 IMAGES, SOUNDS, HITMASKS = {}, {}, {}
