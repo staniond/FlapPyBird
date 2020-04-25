@@ -12,7 +12,7 @@ class Evolution:
         self.best_brain = self.population[0].brain
         self.best_fitness = 0
         self.previous_population = []
-        self.gen_info = ["Generation 1", ]
+        self.gen_info = ['']
 
         print(f"Population size: {self.population_size} birds",
               f"mutation probability: {self.mutation_probability * 100}%",
@@ -23,8 +23,6 @@ class Evolution:
         self.previous_population = self.previous_population + self.population
         self.population = []
 
-        self.generation_number += 1
-
         prev_best_bird = self.pick_best_bird(self.previous_population)
         if prev_best_bird.fitness > self.best_fitness:
             self.best_fitness = prev_best_bird.fitness
@@ -34,6 +32,7 @@ class Evolution:
         self.gen_info = [f"Generation {self.generation_number}",
                          f"best gen fitness: {self.pick_best_bird(self.previous_population).fitness}",
                          f"best bird fitness: {self.best_fitness}", ]
+        self.log()
 
         while len(self.population) < POPULATION_SIZE:
             first_brain, second_brain = self.pick_brains(self.previous_population)
@@ -48,6 +47,10 @@ class Evolution:
             self.population.append(Bird(second_brain))
 
         self.previous_population = []
+        self.generation_number += 1
+
+    def log(self):
+        print(', '.join(self.gen_info))
 
     # tournament selection from 20% of the population
     @staticmethod
