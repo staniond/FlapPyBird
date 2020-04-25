@@ -48,7 +48,7 @@ class Evolution:
 
         self.previous_population = []
 
-    # tournament selection from 10% of the population
+    # tournament selection from 20% of the population
     @staticmethod
     def tournament_pick_brains(generation):
         tournament = []
