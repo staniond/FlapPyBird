@@ -186,6 +186,8 @@ def mainGame(evolution, show_best_bird):
                     for bird in birds:
                         evolution.previous_population.append(bird)
                     return return_val
+            # if event.type == KEYDOWN and event.key == K_UP:
+            #     birds[0].flap()
 
         for bird in birds:
             bird.think(upperPipes, lowerPipes)

@@ -33,7 +33,7 @@ class Bird:
 
     def think(self, upperPipes, lowerPipes):
         output = self.brain.forward(self.get_world_data(upperPipes, lowerPipes))
-        if output > 0.5:
+        if output[0] > output[1]:
             self.flap()
 
     def flap(self):
@@ -48,6 +48,10 @@ class Bird:
         crashTest = checkCrash(self, upperPipes, lowerPipes)
 
         if crashTest[0]:
+            if not crashTest[1]:  # crash into pipe, get fitness if close to gap
+                pipe_index = self.get_closest_pipe(upperPipes)
+                middle_gap = upperPipes[pipe_index]['gap'] + PIPEGAPSIZE / 2
+                self.fitness -= abs(middle_gap - (self.playery + self.images[0].get_height()/2))//20
             # play hit and die sounds
             # SOUNDS['hit'].play()
             # if not crashTest[1]:
@@ -90,9 +94,11 @@ class Bird:
         return [
             self.playery / BASEY,  # bird y location
             (self.playerVelY / self.playerMaxVelY) / 2 + .5,  # bird y velocity
-            (upperPipes[closest_index]['x'] + IMAGES['pipe'][0].get_width() - self.playerx) / 150,  # pipe x location
-            upperPipes[closest_index]['gap'] / BASEY,  # upper pipe y location
-            lowerPipes[closest_index]['gap'] / BASEY,  # lower pipe y location
+            # pipe x location
+            (upperPipes[closest_index]['x'] + IMAGES['pipe'][0].get_width() - self.playerx) / 150,
+            upperPipes[closest_index]['gap'] / BASEY,  # closest upper pipe y location
+            lowerPipes[closest_index]['gap'] / BASEY,  # closest lower pipe y location
+            (upperPipes[closest_index + 1]['gap'] + PIPEGAPSIZE / 2) / BASEY,  # next upper pipe y location
         ]
 
     def get_closest_pipe(self, pipes):
