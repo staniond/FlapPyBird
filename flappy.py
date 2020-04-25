@@ -127,7 +127,8 @@ def showWelcomeAnimation():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and event.key == K_n:
+            # any key
+            if event.type == KEYDOWN:
                 # make first flap sound and return values for mainGame
                 # SOUNDS['wing'].play()
                 return
