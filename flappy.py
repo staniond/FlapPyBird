@@ -3,6 +3,7 @@ import random
 import sys
 
 import pygame
+import pygame.freetype
 from pygame.locals import *
 
 from globals import *
@@ -10,11 +11,13 @@ from evolution import *
 
 
 def main():
-    global SCREEN, FPSCLOCK, FPS
+    global SCREEN, FPSCLOCK, FPS, GAMEFONT
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
     pygame.display.set_caption('Flappy Bird')
+
+    GAMEFONT = pygame.freetype.Font("assets/OpenSans-Regular.ttf", 20)
 
     # numbers sprites for score display
     IMAGES['numbers'] = (
@@ -110,7 +113,7 @@ def main():
             evolution.new_population()
 
         if not skip_game_over:
-            show_best_bird = showGameOverScreen(crashInfo)
+            show_best_bird = showGameOverScreen(crashInfo, evolution)
 
 
 def showWelcomeAnimation():
@@ -252,11 +255,16 @@ def mainGame(evolution, show_best_bird):
         for bird in birds:
             bird.blit(SCREEN)
 
+        text_padding = 30
+        for line in evolution.gen_info:
+            GAMEFONT.render_to(SCREEN, (10, BASEY + text_padding), line)
+            text_padding += 25
+
         pygame.display.update()
         FPSCLOCK.tick(FPS if show_best_bird else -1)
 
 
-def showGameOverScreen(crashInfo):
+def showGameOverScreen(crashInfo, evolution):
     """crashes the player down ans shows gameover image"""
     bird = crashInfo['lastBird']
     score = crashInfo['score']
@@ -303,6 +311,11 @@ def showGameOverScreen(crashInfo):
         playerSurface = pygame.transform.rotate(bird.images[1], bird.playerRot)
         SCREEN.blit(playerSurface, (playerx, bird.playery))
         SCREEN.blit(IMAGES['gameover'], (50, 180))
+
+        text_padding = 30
+        for line in evolution.gen_info:
+            GAMEFONT.render_to(SCREEN, (10, BASEY + text_padding), line)
+            text_padding += 25
 
         FPSCLOCK.tick(FPS)
         pygame.display.update()
