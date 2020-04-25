@@ -51,7 +51,9 @@ class Bird:
             if not crashTest[1]:  # crash into pipe, get fitness if close to gap
                 pipe_index = self.get_closest_pipe(upperPipes)
                 middle_gap = upperPipes[pipe_index]['gap'] + PIPEGAPSIZE / 2
-                self.fitness -= abs(middle_gap - (self.playery + self.images[0].get_height()/2))//20
+                self.fitness -= abs(middle_gap - (self.playery + self.images[0].get_height() / 2)) // 20
+            else:
+                self.fitness -= 15  # about max penalization for crashing into pipe - crashing into ground is even worse
             # play hit and die sounds
             # SOUNDS['hit'].play()
             # if not crashTest[1]:
