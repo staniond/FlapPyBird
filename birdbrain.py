@@ -22,11 +22,12 @@ class BirdBrain:
         return copy.deepcopy(self)
 
     def mutate(self, probability):
-        for tensor in self.net.parameters():
-            flattened = tensor.view(-1)
-            for i in range(flattened.size()[0]):
-                if random.random() < probability:
-                    flattened[i] = flattened[i].item() + np.random.normal()
+        with torch.no_grad():
+            for tensor in self.net.parameters():
+                flattened = tensor.view(-1)
+                for i in range(flattened.size()[0]):
+                    if random.random() < probability:
+                        flattened[i] = flattened[i].item() + np.random.normal()
 
     def log(self):
         for tensor in list(self.net.parameters()):
